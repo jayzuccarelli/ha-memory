@@ -51,7 +51,8 @@ async def test_save_tool_persists_memory(hass, setup_integration):
     api = await llm.async_get_api(hass, DOMAIN, _ctx(hass))
     save_tool = next(t for t in api.tools if t.name == "memory_save")
 
-    result = await api.async_call_tool(
+    result = await save_tool.async_call(
+        hass,
         llm.ToolInput(
             tool_name="memory_save",
             tool_args={
@@ -60,7 +61,8 @@ async def test_save_tool_persists_memory(hass, setup_integration):
                 "description": "User has a dog named Bau",
                 "content": "The user has a dog named Bau.",
             },
-        )
+        ),
+        _ctx(hass),
     )
     assert result == {"saved": "pet_bau"}
 
@@ -78,8 +80,11 @@ async def test_read_tool_returns_content(hass, setup_integration):
         blocking=True,
     )
     api = await llm.async_get_api(hass, DOMAIN, _ctx(hass))
-    result = await api.async_call_tool(
-        llm.ToolInput(tool_name="memory_read", tool_args={"name": "k"})
+    read_tool = next(t for t in api.tools if t.name == "memory_read")
+    result = await read_tool.async_call(
+        hass,
+        llm.ToolInput(tool_name="memory_read", tool_args={"name": "k"}),
+        _ctx(hass),
     )
     assert result["name"] == "k"
     assert "the body" in result["content"]
@@ -92,7 +97,10 @@ async def test_delete_tool_removes_memory(hass, setup_integration):
         blocking=True,
     )
     api = await llm.async_get_api(hass, DOMAIN, _ctx(hass))
-    result = await api.async_call_tool(
-        llm.ToolInput(tool_name="memory_delete", tool_args={"name": "k"})
+    delete_tool = next(t for t in api.tools if t.name == "memory_delete")
+    result = await delete_tool.async_call(
+        hass,
+        llm.ToolInput(tool_name="memory_delete", tool_args={"name": "k"}),
+        _ctx(hass),
     )
     assert result == {"deleted": "k"}
