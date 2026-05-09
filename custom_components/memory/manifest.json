@@ -1,12 +1,12 @@
 {
   "domain": "memory",
   "name": "Memory",
-  "version": "0.1.0",
+  "codeowners": ["@jayzuccarelli"],
   "config_flow": true,
   "documentation": "https://github.com/jayzuccarelli/ha-memory",
-  "issue_tracker": "https://github.com/jayzuccarelli/ha-memory/issues",
-  "codeowners": ["@jayzuccarelli"],
-  "requirements": [],
+  "integration_type": "service",
   "iot_class": "local_push",
-  "integration_type": "service"
+  "issue_tracker": "https://github.com/jayzuccarelli/ha-memory/issues",
+  "requirements": [],
+  "version": "0.1.0"
 }
