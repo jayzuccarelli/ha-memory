@@ -52,31 +52,31 @@ Copy `custom_components/memory/` into your HA `config/custom_components/`, resta
 
 ## Wire it into your conversation agent
 
-The integration's job is to expose the services + sensor. Telling the LLM *when* to call them is up to you, via the conversation agent's system-prompt / instructions field.
+`Memory` registers itself as a native HA LLM API, so any conversation agent that uses HA's standard LLM helpers can pick it up without you editing prompts.
 
-### For the official Anthropic integration
+### Recommended: select the API in your conversation agent (zero prompt edits)
 
-Settings → Devices & Services → Anthropic → Configure → Instructions:
+Settings → Devices & Services → *your conversation agent* → Configure → **Control Home Assistant API** → choose **Memory** (or "Assist + Memory").
 
-````
-You have a persistent memory of stable facts. Current memory index:
+That's it. The current memory index is automatically injected into the system prompt, and the three tools (`memory_save`, `memory_read`, `memory_delete`) are exposed to the LLM. Works the same for:
 
+- Anthropic Claude
+- OpenAI Conversation
+- Google Generative AI / Gemini
+- AI Tasks
+- Any custom integration that consumes `homeassistant.helpers.llm`
+
+### Alternative: use the services directly
+
+If you want to drive memory from automations, scripts, or AI Task service calls, the integration also exposes `memory.save`, `memory.read`, and `memory.delete` as plain HA services with full schemas.
+
+### Optional: inject the index into a custom prompt
+
+If you don't select the API and instead want to template the index into your own instructions field manually:
+
+```
 {{ state_attr('sensor.memory_index', 'content') or '(no memories yet)' }}
-
-When the user asks to remember something, call memory.save. Use snake_case names. Pick a type: user, feedback, project, reference, or vocabulary.
-
-When the user asks to forget something, call memory.delete with the matching name.
-
-When an index entry isn't enough to answer, call memory.read to load the full body.
-````
-
-### For other agents (OpenAI, local LLMs)
-
-Same pattern — inject the sensor's `content` attribute into your system prompt and instruct the model when to call the three services.
-
-### Exposing services to Assist
-
-Some conversation agents only see entities/scripts that you explicitly expose. If yours requires this, wrap each service in a `script:` and expose those scripts via Settings → Voice assistants → Expose.
+```
 
 ## Memory file format
 

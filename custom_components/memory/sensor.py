@@ -19,7 +19,7 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    store: MemoryStore = hass.data[DOMAIN][entry.entry_id]
+    store: MemoryStore = hass.data[DOMAIN][entry.entry_id]["store"]
     async_add_entities([MemoryIndexSensor(entry, store)], update_before_add=True)
 
 

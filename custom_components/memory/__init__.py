@@ -9,7 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import config_validation as cv, llm
 
 from .const import (
     CONF_PATH,
@@ -20,6 +20,7 @@ from .const import (
     SERVICE_SAVE,
     VALID_TYPES,
 )
+from .llm import MemoryAPI
 from .memory_store import (
     MemoryError as _MemoryError,
     MemoryStore,
@@ -50,7 +51,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     path = entry.data.get(CONF_PATH, DEFAULT_PATH)
     store = await hass.async_add_executor_job(MemoryStore, path)
 
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = store
+    api = MemoryAPI(hass, store)
+    unregister_api = llm.async_register_api(hass, api)
+
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
+        "store": store,
+        "unregister_api": unregister_api,
+    }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -107,7 +114,9 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id, None)
+        slot = hass.data[DOMAIN].pop(entry.entry_id, None)
+        if slot is not None:
+            slot["unregister_api"]()
         for svc in (SERVICE_SAVE, SERVICE_READ, SERVICE_DELETE):
             hass.services.async_remove(DOMAIN, svc)
     return unload_ok
