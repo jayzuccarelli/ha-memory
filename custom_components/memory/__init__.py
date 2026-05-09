@@ -74,9 +74,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         except _MemoryError as err:
             raise HomeAssistantError(str(err)) from err
         sensor_eid = f"sensor.{DOMAIN}_index"
-        await hass.services.async_call(
-            "homeassistant", "update_entity", {"entity_id": sensor_eid}, blocking=False
-        )
+        if hass.services.has_service("homeassistant", "update_entity"):
+            await hass.services.async_call(
+                "homeassistant",
+                "update_entity",
+                {"entity_id": sensor_eid},
+                blocking=False,
+            )
 
     async def handle_read(call: ServiceCall) -> ServiceResponse:
         try:
@@ -91,9 +95,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         except _MemoryError as err:
             raise HomeAssistantError(str(err)) from err
         sensor_eid = f"sensor.{DOMAIN}_index"
-        await hass.services.async_call(
-            "homeassistant", "update_entity", {"entity_id": sensor_eid}, blocking=False
-        )
+        if hass.services.has_service("homeassistant", "update_entity"):
+            await hass.services.async_call(
+                "homeassistant",
+                "update_entity",
+                {"entity_id": sensor_eid},
+                blocking=False,
+            )
 
     hass.services.async_register(DOMAIN, SERVICE_SAVE, handle_save, schema=SAVE_SCHEMA)
     hass.services.async_register(

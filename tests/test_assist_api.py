@@ -31,7 +31,7 @@ def _ctx(hass) -> llm.LLMContext:
 
 
 async def test_api_registered(hass, setup_integration):
-    api = llm.async_get_api(hass, DOMAIN, _ctx(hass))
+    api = await llm.async_get_api(hass, DOMAIN, _ctx(hass))
     assert api is not None
     assert api.api.name == "Memory"
 
