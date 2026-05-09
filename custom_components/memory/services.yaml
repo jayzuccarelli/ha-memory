@@ -1,0 +1,70 @@
+save:
+  name: Save memory
+  description: >-
+    Save a fact to long-term memory. Survives across conversations. Use when the user
+    asks to remember something stable about themselves, their household, vocabulary,
+    or preferences.
+  fields:
+    name:
+      name: Name
+      description: Short snake_case identifier (a-z, 0-9, _ only). Reuse to overwrite.
+      example: pet_bau
+      required: true
+      selector:
+        text:
+    type:
+      name: Type
+      description: Category for the memory.
+      example: user
+      required: true
+      selector:
+        select:
+          options:
+            - user
+            - feedback
+            - project
+            - reference
+            - vocabulary
+    description:
+      name: Description
+      description: One-line summary shown in the index.
+      example: User has a dog named Bau
+      required: true
+      selector:
+        text:
+    content:
+      name: Content
+      description: The full memory body.
+      example: The user has a dog named Bau. Bau is a household member.
+      required: true
+      selector:
+        text:
+          multiline: true
+
+read:
+  name: Read memory
+  description: >-
+    Read the full body of a specific memory by name. Returns content. Use when the
+    one-line index entry is not enough to answer the user.
+  fields:
+    name:
+      name: Name
+      description: The snake_case identifier of the memory to read.
+      example: pet_bau
+      required: true
+      selector:
+        text:
+
+delete:
+  name: Delete memory
+  description: >-
+    Delete a memory by name. Use when the user asks to forget something or when a
+    memory is no longer accurate.
+  fields:
+    name:
+      name: Name
+      description: The snake_case identifier of the memory to delete.
+      example: pet_bau
+      required: true
+      selector:
+        text:

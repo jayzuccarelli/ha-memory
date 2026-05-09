@@ -1,0 +1,16 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Memory",
+        "description": "Pick the directory where memory files will live. Defaults to /config/memory.",
+        "data": {
+          "path": "Storage path"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Only a single Memory instance is supported."
+    }
+  }
+}
