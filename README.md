@@ -36,47 +36,65 @@ If you have a few dozen memories and want them transparent and predictable, use 
 - **Sensor**: `sensor.memory_index` — its `content` attribute holds the full `MEMORY.md` index, ready to inject into your conversation agent's system prompt template
 - **A directory of markdown files** you control completely
 
+## Quick start
+
+Once your conversation agent (Claude / OpenAI / Gemini / etc.) is set up in HA:
+
+1. Install Memory (instructions below) and restart HA.
+2. **Settings → Devices & Services → Add Integration → "Memory"**, submit (default path is fine).
+3. **Settings → Devices & Services → *your conversation agent* → Configure** → tick the **Memory** checkbox in the API list (next to the existing "Assist" one) → submit.
+4. Talk to your assistant: *"Remember that my dog's name is Bau."*
+5. New conversation, days later: *"What's my dog's name?"* → it remembers.
+
+That's it. No prompt templates, no script wrappers, no exposure step.
+
 ## Install
 
-### Via HACS (custom repository)
+### Via HACS (custom repository, until HACS default PR merges)
 
 1. HACS → Integrations → top-right ⋮ → Custom repositories
 2. Add `https://github.com/jayzuccarelli/ha-memory` as category **Integration**
 3. Install **Memory**
 4. Restart Home Assistant
-5. Settings → Devices & Services → Add Integration → **Memory** → submit (default path is `/config/memory`)
 
 ### Manually
 
-Copy `custom_components/memory/` into your HA `config/custom_components/`, restart, then add the integration via Settings.
+Copy `custom_components/memory/` into your HA `config/custom_components/`, restart.
+
+### Add the integration
+
+After install + restart: **Settings → Devices & Services → Add Integration → search "Memory" → submit**. The default storage path `/config/memory` is correct for most setups.
 
 ## Wire it into your conversation agent
 
-`Memory` registers itself as a native HA LLM API, so any conversation agent that uses HA's standard LLM helpers can pick it up without you editing prompts.
+Memory registers itself as a native HA LLM API. In your conversation agent's config, you'll see **Memory** appear in the API list (alongside the built-in **Assist**). Tick it.
 
-### Recommended: select the API in your conversation agent (zero prompt edits)
+That's all the wiring. The agent now sees:
 
-Settings → Devices & Services → *your conversation agent* → Configure → **Control Home Assistant API** → choose **Memory** (or "Assist + Memory").
+- The three tools — `memory_save`, `memory_read`, `memory_delete` — as native LLM tools
+- The current memory index — auto-injected into the system prompt, no template editing needed
 
-That's it. The current memory index is automatically injected into the system prompt, and the three tools (`memory_save`, `memory_read`, `memory_delete`) are exposed to the LLM. Works the same for:
+Tested with **Anthropic Claude**, **OpenAI Conversation**, **Google Generative AI / Gemini**, and **AI Tasks** — works identically with all of them.
 
-- Anthropic Claude
-- OpenAI Conversation
-- Google Generative AI / Gemini
-- AI Tasks
-- Any custom integration that consumes `homeassistant.helpers.llm`
+> **Tip:** if your agent's UI shows a single "Assist" checkbox and no API list, you may need to expand the section labeled something like *"Recommended model settings"* or *"Advanced options"* — providers vary slightly in how they surface the API picker.
 
-### Alternative: use the services directly
+### Driving memory from automations / scripts
 
-If you want to drive memory from automations, scripts, or AI Task service calls, the integration also exposes `memory.save`, `memory.read`, and `memory.delete` as plain HA services with full schemas.
+If you want a non-LLM caller (an automation, AI Task service call, or bespoke script) to read or write memories, the integration also exposes plain HA services:
 
-### Optional: inject the index into a custom prompt
+- `memory.save` — `name`, `type`, `description`, `content`
+- `memory.read` — `name` (returns content as response data)
+- `memory.delete` — `name`
 
-If you don't select the API and instead want to template the index into your own instructions field manually:
+### Manual prompt injection (only if you skip the API)
+
+If you'd rather not select the Memory API and want to inject the index into your agent's instructions field by hand:
 
 ```
 {{ state_attr('sensor.memory_index', 'content') or '(no memories yet)' }}
 ```
+
+You'd then also need to instruct the LLM to use the services. The native API path is much cleaner — recommended unless you have a specific reason.
 
 ## Memory file format
 
