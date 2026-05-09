@@ -20,7 +20,7 @@ from .const import (
     SERVICE_SAVE,
     VALID_TYPES,
 )
-from .llm import MemoryAPI
+from .assist_api import MemoryAPI
 from .memory_store import (
     MemoryError as _MemoryError,
     MemoryStore,
