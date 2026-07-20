@@ -12,28 +12,30 @@ Inspired by Claude Code's `MEMORY.md` pattern.
 
 ## Why this and not the others?
 
-Other HA memory integrations use vector embeddings, ChromaDB, or LangChain. They work — but they're heavy, opaque, and you can't debug them with `cat`.
+Other HA memory integrations retrieve semantically, backed by embeddings or a
+dedicated memory engine. They work, and they scale further than this does. The
+trade-off is that they're heavier, and you can't debug them with `cat`.
 
 This integration takes the opposite trade-off:
 
-| | This (`memory`) | Vector-based (Home Mind, hass-agent-llm, …) |
+| | This (`memory`) | Retrieval-based (Home Mind, hass-agent-llm, …) |
 |---|---|---|
 | Index always in prompt | ✅ | ❌ (top-k retrieval) |
 | Inspect with `cat` / `git diff` | ✅ | ❌ |
-| External dependencies | None | ChromaDB / FAISS / LangChain |
+| External dependencies | None | Varies (Shodh, ChromaDB, …) |
 | Provider-agnostic | ✅ | Mostly |
 | Scales to 10,000s of memories | ❌ | ✅ |
 | Resource footprint | ~0 | Non-trivial |
 
-If you have a few dozen memories and want them transparent and predictable, use this. If you have thousands and want semantic search, use a vector-based one.
+If you have a few dozen memories and want them transparent and predictable, use this. If you have thousands and want semantic search, use a retrieval-based one.
 
 ## What you get
 
 - **Services** (exposed as tools to your LLM):
-  - `memory.save` — save or overwrite a memory
-  - `memory.read` — read the full body of a memory
-  - `memory.delete` — delete a memory
-- **Sensor**: `sensor.memory_index` — its `content` attribute holds the full `MEMORY.md` index, ready to inject into your conversation agent's system prompt template
+  - `memory.save`: save or overwrite a memory
+  - `memory.read`: read the full body of a memory
+  - `memory.delete`: delete a memory
+- **Sensor**: `sensor.memory_index`, whose `content` attribute holds the full `MEMORY.md` index, ready to inject into your conversation agent's system prompt template
 - **A directory of markdown files** you control completely
 
 ## Quick start
@@ -71,20 +73,20 @@ Memory registers itself as a native HA LLM API. In your conversation agent's con
 
 That's all the wiring. The agent now sees:
 
-- The three tools — `memory_save`, `memory_read`, `memory_delete` — as native LLM tools
-- The current memory index — auto-injected into the system prompt, no template editing needed
+- The three tools (`memory_save`, `memory_read`, `memory_delete`) as native LLM tools
+- The current memory index, auto-injected into the system prompt, no template editing needed
 
-Tested with **Anthropic Claude**, **OpenAI Conversation**, **Google Generative AI / Gemini**, and **AI Tasks** — works identically with all of them.
+Tested with **Anthropic Claude**, **OpenAI Conversation**, **Google Generative AI / Gemini**, and **AI Tasks**.
 
-> **Tip:** if your agent's UI shows a single "Assist" checkbox and no API list, you may need to expand the section labeled something like *"Recommended model settings"* or *"Advanced options"* — providers vary slightly in how they surface the API picker.
+> **Tip:** if your agent's UI shows a single "Assist" checkbox and no API list, you may need to expand the section labeled something like *"Recommended model settings"* or *"Advanced options"*, since providers vary slightly in how they surface the API picker.
 
 ### Driving memory from automations / scripts
 
 If you want a non-LLM caller (an automation, AI Task service call, or bespoke script) to read or write memories, the integration also exposes plain HA services:
 
-- `memory.save` — `name`, `type`, `description`, `content`
-- `memory.read` — `name` (returns content as response data)
-- `memory.delete` — `name`
+- `memory.save`: `name`, `type`, `description`, `content`
+- `memory.read`: `name` (returns content as response data)
+- `memory.delete`: `name`
 
 ### Manual prompt injection (only if you skip the API)
 
@@ -94,7 +96,7 @@ If you'd rather not select the Memory API and want to inject the index into your
 {{ state_attr('sensor.memory_index', 'content') or '(no memories yet)' }}
 ```
 
-You'd then also need to instruct the LLM to use the services. The native API path is much cleaner — recommended unless you have a specific reason.
+You'd then also need to instruct the LLM to use the services. The native API path is much cleaner, and recommended unless you have a specific reason.
 
 ## Memory file format
 
@@ -124,4 +126,4 @@ Plus an auto-maintained index (`MEMORY.md`) of one-liners pointing at each file.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).

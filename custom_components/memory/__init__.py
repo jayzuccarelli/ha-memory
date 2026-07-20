@@ -1,4 +1,4 @@
-"""The Memory integration — file-backed persistent memory for HA Assist."""
+"""The Memory integration: file-backed persistent memory for HA Assist."""
 from __future__ import annotations
 
 import logging

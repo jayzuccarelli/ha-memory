@@ -7,7 +7,7 @@ Outputs:
   custom_components/memory/brand/logo@2x.png      1024x1024
 
 Design: rounded card with three horizontal lines (text), monochrome on
-transparent background. Indigo fill (#3B5BDB) — distinct from the
+transparent background. Indigo fill (#3B5BDB), distinct from the
 default HA blue, signals "thought / persistent."
 """
 from __future__ import annotations
@@ -34,7 +34,7 @@ def draw_notebook(size: int) -> Image.Image:
     bbox = (pad, pad, size - pad, size - pad)
     d.rounded_rectangle(bbox, radius=radius, fill=INDIGO)
 
-    # Three horizontal "lines" — knock out by drawing transparent pills
+    # Three horizontal "lines", knocked out by drawing transparent pills
     line_x0 = pad + int(size * 0.12)
     line_x1 = size - pad - int(size * 0.12)
     line_h = int(size * 0.06)
@@ -49,7 +49,7 @@ def draw_notebook(size: int) -> Image.Image:
             fill=(255, 255, 255, 230),
         )
 
-    # Top "spine" tab — short rounded bar at top center suggesting a notebook clip
+    # Top "spine" tab: short rounded bar at top center suggesting a notebook clip
     spine_w = int(size * 0.30)
     spine_h = int(size * 0.05)
     spine_x0 = (size - spine_w) // 2
