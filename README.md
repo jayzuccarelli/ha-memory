@@ -20,7 +20,7 @@ This integration takes the opposite trade-off:
 
 | | This (`memory`) | Retrieval-based (Home Mind, hass-agent-llm, …) |
 |---|---|---|
-| Index always in prompt | ✅ | ❌ (top-k retrieval) |
+| Index always in prompt | ✅ | ❌ (retrieved per turn) |
 | Inspect with `cat` / `git diff` | ✅ | ❌ |
 | External dependencies | None | Varies (Shodh, ChromaDB, …) |
 | Provider-agnostic | ✅ | Mostly |
@@ -74,7 +74,7 @@ Memory registers itself as a native HA LLM API. In your conversation agent's con
 That's all the wiring. The agent now sees:
 
 - The three tools (`memory_save`, `memory_read`, `memory_delete`) as native LLM tools
-- The current memory index, auto-injected into the system prompt, no template editing needed
+- The current memory index, auto-injected into the system prompt; no template editing needed
 
 Tested with **Anthropic Claude**, **OpenAI Conversation**, **Google Generative AI / Gemini**, and **AI Tasks**.
 
@@ -96,7 +96,7 @@ If you'd rather not select the Memory API and want to inject the index into your
 {{ state_attr('sensor.memory_index', 'content') or '(no memories yet)' }}
 ```
 
-You'd then also need to instruct the LLM to use the services. The native API path is much cleaner, and recommended unless you have a specific reason.
+You'd then also need to instruct the LLM to use the services. The native API path is much cleaner and is recommended unless you have a specific reason.
 
 ## Memory file format
 
@@ -126,4 +126,4 @@ Plus an auto-maintained index (`MEMORY.md`) of one-liners pointing at each file.
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
