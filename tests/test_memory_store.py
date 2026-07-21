@@ -1,4 +1,4 @@
-"""Unit tests for the synchronous MemoryStore — pure file I/O, no HA needed."""
+"""Unit tests for the synchronous MemoryStore: pure file I/O, no HA needed."""
 from __future__ import annotations
 
 import os

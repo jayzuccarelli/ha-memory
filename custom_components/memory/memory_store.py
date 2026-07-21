@@ -57,7 +57,7 @@ class MemoryStore:
 
     @staticmethod
     def _index_line(name: str, description: str) -> str:
-        return f"- [{name}]({name}.md) — {description}"
+        return f"- [{name}]({name}.md): {description}"
 
     def read_index(self) -> str:
         if not os.path.exists(self.index_path):
