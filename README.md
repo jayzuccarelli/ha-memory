@@ -2,7 +2,7 @@
 
 **Persistent memory for Home Assistant Assist, in plain markdown.**
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 [![Validate](https://github.com/jayzuccarelli/ha-memory/actions/workflows/validate.yml/badge.svg)](https://github.com/jayzuccarelli/ha-memory/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -52,12 +52,14 @@ That's it. No prompt templates, no script wrappers, no exposure step.
 
 ## Install
 
-### Via HACS (custom repository, until HACS default PR merges)
+### Via HACS (recommended)
 
-1. HACS → Integrations → top-right ⋮ → Custom repositories
-2. Add `https://github.com/jayzuccarelli/ha-memory` as category **Integration**
-3. Install **Memory**
-4. Restart Home Assistant
+Memory is in the HACS default store, so no custom repository is needed.
+
+1. HACS → search **Memory** → Download
+2. Restart Home Assistant
+
+[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jayzuccarelli&repository=ha-memory&category=integration)
 
 ### Manually
 
