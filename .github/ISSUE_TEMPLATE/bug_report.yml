@@ -1,0 +1,59 @@
+name: Bug report
+description: Something in Memory isn't working as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for reporting. The details below make it much faster to reproduce.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you said or did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: ha-version
+    attributes:
+      label: Home Assistant version
+      placeholder: "2026.10.2"
+    validations:
+      required: true
+  - type: input
+    id: memory-version
+    attributes:
+      label: Memory version
+      description: HACS → Memory, or the version in custom_components/memory/manifest.json.
+      placeholder: "0.2.2"
+    validations:
+      required: true
+  - type: input
+    id: agent
+    attributes:
+      label: Conversation agent and model
+      description: For example Anthropic Claude, OpenAI Conversation, Google Gemini, Ollama, AI Task.
+      placeholder: "Anthropic, claude-sonnet-5"
+    validations:
+      required: true
+  - type: dropdown
+    id: api
+    attributes:
+      label: Is the Memory API ticked in your agent's settings?
+      options:
+        - "Yes"
+        - "No, I inject the index by hand"
+        - "Not sure"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log lines
+      description: Settings → System → Logs, filtered for "memory". Remove anything personal first.
+      render: text
+  - type: textarea
+    id: index
+    attributes:
+      label: MEMORY.md excerpt (optional)
+      description: Only if relevant, and only the lines you're comfortable sharing.
+      render: markdown
