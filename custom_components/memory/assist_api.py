@@ -2,13 +2,11 @@
 
 Registering this API with `llm.async_register_api` makes the three tools
 (save/read/delete) available to every conversation agent that uses HA's
-standard LLM helpers — Anthropic, OpenAI, Google Generative AI, AI Tasks,
+standard LLM helpers: Anthropic, OpenAI, Google Generative AI, AI Tasks,
 and any other integration that consumes `llm.API`. Selection happens in
 the agent's config flow under "Control Home Assistant" → API.
 """
 from __future__ import annotations
-
-from typing import TYPE_CHECKING
 
 import voluptuous as vol
 
@@ -26,9 +24,6 @@ from .memory_store import (
     async_read_index,
     async_save,
 )
-
-if TYPE_CHECKING:
-    pass
 
 
 _API_PROMPT_TEMPLATE = (
