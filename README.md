@@ -1,106 +1,60 @@
 # Memory
 
-**Persistent memory for Home Assistant Assist, in plain markdown.**
+**Home Assistant's Assist remembers things between conversations, by voice or chat.**
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 [![Validate](https://github.com/jayzuccarelli/ha-memory/actions/workflows/validate.yml/badge.svg)](https://github.com/jayzuccarelli/ha-memory/actions/workflows/validate.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A lightweight memory layer for HA Assist, OpenAI, Anthropic Claude, or any conversation agent that supports tool use. **No vector DB. No embeddings. Just markdown files** you can read, edit, and version-control.
+<!-- demo GIF goes here -->
 
-Inspired by Claude Code's `MEMORY.md` pattern.
+> "Remember that my dog's name is Bau."
+>
+> *Next day, new conversation:* "What's my dog's name?" → **"Bau."**
 
-## Why this and not the others?
+Works with Claude, OpenAI, Gemini, and other AI agents that use Home Assistant's built-in AI tools. Memories are plain markdown files you can read and edit.
 
-Other HA memory integrations retrieve semantically, backed by embeddings or a
-dedicated memory engine. They work, and they scale further than this does. The
-trade-off is that they're heavier, and you can't debug them with `cat`.
+## Install (about 2 minutes)
 
-This integration takes the opposite trade-off:
+You need an AI conversation agent already set up in Home Assistant.
 
-| | This (`memory`) | Retrieval-based (Home Mind, hass-agent-llm, …) |
+1. **Download.** Click the button, then **Download**, then restart Home Assistant.
+
+   [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jayzuccarelli&repository=ha-memory&category=integration)
+
+2. **Add it.** Settings → Devices & Services → **Add Integration** → search **Memory** → Submit.
+3. **Turn it on for your assistant.** Settings → Devices & Services → *your AI agent* → **Configure** → tick **Memory** next to **Assist** → Submit.
+
+That's it. Say *"Remember that…"* and it saves. Ask later and it knows.
+
+> **Don't see a Memory checkbox?** Some agents hide it under *"Recommended model settings"* or *"Advanced options"*. Expand that section.
+
+## Why this one
+
+Most memory add-ons use a vector database or a separate memory engine. This one keeps a short list of memories in the assistant's prompt and stores each memory as a markdown file.
+
+| | Memory | Retrieval-based (Home Mind, hass-agent-llm, …) |
 |---|---|---|
-| Index always in prompt | ✅ | ❌ (retrieved per turn) |
-| Inspect with `cat` / `git diff` | ✅ | ❌ |
-| External dependencies | None | Varies (Shodh, ChromaDB, …) |
-| Provider-agnostic | ✅ | Mostly |
-| Scales to 10,000s of memories | ❌ | ✅ |
-| Resource footprint | ~0 | Non-trivial |
+| Setup | Install, tick a box | Extra services or databases |
+| Read and edit memories | Any text editor | Usually not plain files |
+| Best for | A few dozen facts | Thousands of memories |
 
-If you have a few dozen memories and want them transparent and predictable, use this. If you have thousands and want semantic search, use a retrieval-based one.
+## Reference
 
-## What you get
+<details>
+<summary><b>Install manually (without HACS)</b></summary>
 
-- **Services** (exposed as tools to your LLM):
-  - `memory.save`: save or overwrite a memory
-  - `memory.read`: read the full body of a memory
-  - `memory.delete`: delete a memory
-- **Sensor**: `sensor.memory_index`, whose `content` attribute holds the full `MEMORY.md` index, ready to inject into your conversation agent's system prompt template
-- **A directory of markdown files** you control completely
+Copy `custom_components/memory/` into your Home Assistant `config/custom_components/` and restart. Then do steps 2 and 3 above. The default storage path, `/config/memory`, is correct for most setups.
 
-## Quick start
+</details>
 
-Once your conversation agent (Claude / OpenAI / Gemini / etc.) is set up in HA:
+<details>
+<summary><b>How it works</b></summary>
 
-1. Install Memory (instructions below) and restart HA.
-2. **Settings → Devices & Services → Add Integration → "Memory"**, submit (default path is fine).
-3. **Settings → Devices & Services → *your conversation agent* → Configure** → tick the **Memory** checkbox in the API list (next to the existing "Assist" one) → submit.
-4. Talk to your assistant: *"Remember that my dog's name is Bau."*
-5. New conversation, days later: *"What's my dog's name?"* → it remembers.
+Memory registers as a native Home Assistant LLM API. When ticked, your agent gets:
 
-That's it. No prompt templates, no script wrappers, no exposure step.
-
-## Install
-
-### Via HACS (recommended)
-
-Memory is in the HACS default store, so no custom repository is needed.
-
-1. HACS → search **Memory** → Download
-2. Restart Home Assistant
-
-[![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jayzuccarelli&repository=ha-memory&category=integration)
-
-### Manually
-
-Copy `custom_components/memory/` into your HA `config/custom_components/`, restart.
-
-### Add the integration
-
-After install + restart: **Settings → Devices & Services → Add Integration → search "Memory" → submit**. The default storage path `/config/memory` is correct for most setups.
-
-## Wire it into your conversation agent
-
-Memory registers itself as a native HA LLM API. In your conversation agent's config, you'll see **Memory** appear in the API list (alongside the built-in **Assist**). Tick it.
-
-That's all the wiring. The agent now sees:
-
-- The three tools (`memory_save`, `memory_read`, `memory_delete`) as native LLM tools
-- The current memory index, auto-injected into the system prompt; no template editing needed
-
-Tested with **Anthropic Claude**, **OpenAI Conversation**, **Google Generative AI / Gemini**, and **AI Tasks**.
-
-> **Tip:** if your agent's UI shows a single "Assist" checkbox and no API list, you may need to expand the section labeled something like *"Recommended model settings"* or *"Advanced options"*, since providers vary slightly in how they surface the API picker.
-
-### Driving memory from automations / scripts
-
-If you want a non-LLM caller (an automation, AI Task service call, or bespoke script) to read or write memories, the integration also exposes plain HA services:
-
-- `memory.save`: `name`, `type`, `description`, `content`
-- `memory.read`: `name` (returns content as response data)
-- `memory.delete`: `name`
-
-### Manual prompt injection (only if you skip the API)
-
-If you'd rather not select the Memory API and want to inject the index into your agent's instructions field by hand:
-
-```
-{{ state_attr('sensor.memory_index', 'content') or '(no memories yet)' }}
-```
-
-You'd then also need to instruct the LLM to use the services. The native API path is much cleaner and is recommended unless you have a specific reason.
-
-## Memory file format
+- Three tools: `memory_save`, `memory_read`, `memory_delete`
+- The memory index, added to the system prompt on every request
 
 Each memory is one markdown file under your storage path:
 
@@ -114,17 +68,54 @@ type: user
 The user has a dog named Bau. Bau is a household member.
 ```
 
-Plus an auto-maintained index (`MEMORY.md`) of one-liners pointing at each file.
+An auto-maintained `MEMORY.md` index lists one line per memory. The index is always in the prompt; the agent reads a full file only when it needs the details.
 
-## Memory types
+Tested with Anthropic Claude, OpenAI Conversation, Google Generative AI / Gemini, and AI Tasks. Inspired by Claude Code's `MEMORY.md` pattern.
+
+</details>
+
+<details>
+<summary><b>Memory types</b></summary>
 
 | Type | What it's for |
 |---|---|
 | `user` | Facts about the user, household, family, pets |
 | `feedback` | How the assistant should behave (style preferences, things to avoid) |
 | `project` | State of ongoing things in the home |
-| `reference` | Pointers to external systems / dashboards / docs |
+| `reference` | Pointers to external systems, dashboards, docs |
 | `vocabulary` | What specific words mean in this household ("all the lights" excludes the printer plug) |
+
+</details>
+
+<details>
+<summary><b>Use from automations and scripts</b></summary>
+
+Plain Home Assistant services, for callers that aren't an LLM:
+
+- `memory.save`: `name`, `type`, `description`, `content`
+- `memory.read`: `name` (returns content as response data)
+- `memory.delete`: `name`
+
+The sensor `sensor.memory_index` holds the full index in its `content` attribute.
+
+</details>
+
+<details>
+<summary><b>Inject the index by hand (skip the API)</b></summary>
+
+If you don't tick the Memory API, add this to your agent's instructions:
+
+```
+{{ state_attr('sensor.memory_index', 'content') or '(no memories yet)' }}
+```
+
+You then also need to tell the model to use the services. Ticking the API is simpler.
+
+</details>
+
+## Found a bug?
+
+[Open an issue](https://github.com/jayzuccarelli/ha-memory/issues/new?template=bug_report.yml). It takes a minute.
 
 ## License
 
