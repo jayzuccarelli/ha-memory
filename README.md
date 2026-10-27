@@ -14,24 +14,27 @@
 
 Works with Claude, OpenAI, Gemini, and other AI agents that use Home Assistant's built-in AI tools. Memories are plain markdown files you can read and edit.
 
-## Install (about 2 minutes)
+## Install (About 2 Minutes)
 
 You need an AI conversation agent already set up in Home Assistant.
 
-1. **Download.** Click the button, then **Download**, then restart Home Assistant.
+Tip: Ctrl-click (Cmd-click on Mac) the buttons to keep these steps open.
+
+1. **Download.** Click the button, or open **Marketplace** (Settings → Marketplace; called **HACS** before Home Assistant 2026.11) and search **Memory**. Then **Download** and restart Home Assistant.
 
    [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jayzuccarelli&repository=ha-memory&category=integration)
 
-2. **Add it.** Click the button, then **Submit**.
+2. **Add it.** Click the button, or go to Settings → Devices & Services → **Add Integration** and search **Memory**. Then **Submit**.
 
    [![Add integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=memory)
+
 3. **Turn it on for your assistant.** Settings → Devices & Services → *your AI agent* → **Configure** → tick **Memory** next to **Assist** → Submit.
 
-That's it. Say *"Remember that…"* and it saves. Ask later and it knows.
+That's it. Ask in your own words, like *"remember that…"* or *"don't forget…"*, and it saves. It may also save lasting facts you mention without being asked, depending on the model. Ask later and it knows.
 
 > **Don't see a Memory checkbox?** Some agents hide it under *"Recommended model settings"* or *"Advanced options"*. Expand that section.
 
-## Why this one
+## Why This One
 
 Most memory add-ons use a vector database or a separate memory engine. This one keeps a short list of memories in the assistant's prompt and stores each memory as a markdown file.
 
@@ -44,14 +47,14 @@ Most memory add-ons use a vector database or a separate memory engine. This one 
 ## Reference
 
 <details>
-<summary><b>Install manually (without HACS)</b></summary>
+<summary><b>Install Manually (Without HACS)</b></summary>
 
 Copy `custom_components/memory/` into your Home Assistant `config/custom_components/` and restart. Then do steps 2 and 3 above. The default storage path, `/config/memory`, is correct for most setups.
 
 </details>
 
 <details>
-<summary><b>How it works</b></summary>
+<summary><b>How It Works</b></summary>
 
 Memory registers as a native Home Assistant LLM API. When ticked, your agent gets:
 
@@ -77,7 +80,7 @@ Tested with Anthropic Claude, OpenAI Conversation, Google Generative AI / Gemini
 </details>
 
 <details>
-<summary><b>Memory types</b></summary>
+<summary><b>Memory Types</b></summary>
 
 | Type | What it's for |
 |---|---|
@@ -90,7 +93,7 @@ Tested with Anthropic Claude, OpenAI Conversation, Google Generative AI / Gemini
 </details>
 
 <details>
-<summary><b>Use from automations and scripts</b></summary>
+<summary><b>Use From Automations and Scripts</b></summary>
 
 Plain Home Assistant services, for callers that aren't an LLM:
 
@@ -103,7 +106,7 @@ The sensor `sensor.memory_index` holds the full index in its `content` attribute
 </details>
 
 <details>
-<summary><b>Inject the index by hand (skip the API)</b></summary>
+<summary><b>Inject the Index by Hand (Skip the API)</b></summary>
 
 If you don't tick the Memory API, add this to your agent's instructions:
 
@@ -115,7 +118,7 @@ You then also need to tell the model to use the services. Ticking the API is sim
 
 </details>
 
-## Found a bug?
+## Found a Bug?
 
 [Open an issue](https://github.com/jayzuccarelli/ha-memory/issues/new?template=bug_report.yml). It takes a minute.
 
