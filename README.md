@@ -8,9 +8,9 @@
 
 <!-- demo GIF goes here -->
 
-> "Remember that my dog's name is Bau."
+> "Remember that my dog's name is Spot."
 >
-> *Next day, new conversation:* "What's my dog's name?" → **"Bau."**
+> *Next day, new conversation:* "What's my dog's name?" → **"Spot."**
 
 Works with Claude, OpenAI, Gemini, and other AI agents that use Home Assistant's built-in AI tools. Memories are plain markdown files you can read and edit.
 
@@ -22,7 +22,9 @@ You need an AI conversation agent already set up in Home Assistant.
 
    [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jayzuccarelli&repository=ha-memory&category=integration)
 
-2. **Add it.** Settings → Devices & Services → **Add Integration** → search **Memory** → Submit.
+2. **Add it.** Click the button, then **Submit**.
+
+   [![Add integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=memory)
 3. **Turn it on for your assistant.** Settings → Devices & Services → *your AI agent* → **Configure** → tick **Memory** next to **Assist** → Submit.
 
 That's it. Say *"Remember that…"* and it saves. Ask later and it knows.
@@ -60,12 +62,12 @@ Each memory is one markdown file under your storage path:
 
 ```markdown
 ---
-name: pet_bau
-description: User has a dog named Bau
+name: pet_spot
+description: User has a dog named Spot
 type: user
 ---
 
-The user has a dog named Bau. Bau is a household member.
+The user has a dog named Spot. Spot is a household member.
 ```
 
 An auto-maintained `MEMORY.md` index lists one line per memory. The index is always in the prompt; the agent reads a full file only when it needs the details.
