@@ -30,7 +30,7 @@ Tip: Ctrl-click (Cmd-click on Mac) the buttons to keep these steps open.
 
 3. **Turn it on for your assistant.** Settings → Devices & Services → *your AI agent* → **Configure** → tick **Memory** next to **Assist** → Submit.
 
-That's it. Say *"Remember that…"* and it saves. Ask later and it knows.
+That's it. Ask in your own words, like *"remember that…"* or *"don't forget…"*, and it saves. It may also save lasting facts you mention without being asked, depending on the model. Ask later and it knows.
 
 > **Don't see a Memory checkbox?** Some agents hide it under *"Recommended model settings"* or *"Advanced options"*. Expand that section.
 
