@@ -20,7 +20,7 @@ You need an AI conversation agent already set up in Home Assistant.
 
 Tip: Ctrl-click (Cmd-click on Mac) the buttons to keep these steps open.
 
-1. **Download.** Click the button, or open HACS and search **Memory**. Then **Download** and restart Home Assistant.
+1. **Download.** Click the button, or open **Marketplace** (Settings → Marketplace; called **HACS** before Home Assistant 2026.11) and search **Memory**. Then **Download** and restart Home Assistant.
 
    [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jayzuccarelli&repository=ha-memory&category=integration)
 
