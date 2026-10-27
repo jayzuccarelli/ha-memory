@@ -14,7 +14,7 @@
 
 Works with Claude, OpenAI, Gemini, and other AI agents that use Home Assistant's built-in AI tools. Memories are plain markdown files you can read and edit.
 
-## Install (about 2 minutes)
+## Install (About 2 Minutes)
 
 You need an AI conversation agent already set up in Home Assistant.
 
@@ -34,7 +34,7 @@ That's it. Ask in your own words, like *"remember that…"* or *"don't forget…
 
 > **Don't see a Memory checkbox?** Some agents hide it under *"Recommended model settings"* or *"Advanced options"*. Expand that section.
 
-## Why this one
+## Why This One
 
 Most memory add-ons use a vector database or a separate memory engine. This one keeps a short list of memories in the assistant's prompt and stores each memory as a markdown file.
 
@@ -47,14 +47,14 @@ Most memory add-ons use a vector database or a separate memory engine. This one 
 ## Reference
 
 <details>
-<summary><b>Install manually (without HACS)</b></summary>
+<summary><b>Install Manually (Without HACS)</b></summary>
 
 Copy `custom_components/memory/` into your Home Assistant `config/custom_components/` and restart. Then do steps 2 and 3 above. The default storage path, `/config/memory`, is correct for most setups.
 
 </details>
 
 <details>
-<summary><b>How it works</b></summary>
+<summary><b>How It Works</b></summary>
 
 Memory registers as a native Home Assistant LLM API. When ticked, your agent gets:
 
@@ -80,7 +80,7 @@ Tested with Anthropic Claude, OpenAI Conversation, Google Generative AI / Gemini
 </details>
 
 <details>
-<summary><b>Memory types</b></summary>
+<summary><b>Memory Types</b></summary>
 
 | Type | What it's for |
 |---|---|
@@ -93,7 +93,7 @@ Tested with Anthropic Claude, OpenAI Conversation, Google Generative AI / Gemini
 </details>
 
 <details>
-<summary><b>Use from automations and scripts</b></summary>
+<summary><b>Use From Automations and Scripts</b></summary>
 
 Plain Home Assistant services, for callers that aren't an LLM:
 
@@ -106,7 +106,7 @@ The sensor `sensor.memory_index` holds the full index in its `content` attribute
 </details>
 
 <details>
-<summary><b>Inject the index by hand (skip the API)</b></summary>
+<summary><b>Inject the Index by Hand (Skip the API)</b></summary>
 
 If you don't tick the Memory API, add this to your agent's instructions:
 
@@ -118,7 +118,7 @@ You then also need to tell the model to use the services. Ticking the API is sim
 
 </details>
 
-## Found a bug?
+## Found a Bug?
 
 [Open an issue](https://github.com/jayzuccarelli/ha-memory/issues/new?template=bug_report.yml). It takes a minute.
 
