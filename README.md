@@ -18,13 +18,16 @@ Works with Claude, OpenAI, Gemini, and other AI agents that use Home Assistant's
 
 You need an AI conversation agent already set up in Home Assistant.
 
-1. **Download.** Click the button, then **Download**, then restart Home Assistant.
+Tip: Ctrl-click (Cmd-click on Mac) the buttons to keep these steps open.
+
+1. **Download.** Click the button, or open HACS and search **Memory**. Then **Download** and restart Home Assistant.
 
    [![Open in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jayzuccarelli&repository=ha-memory&category=integration)
 
-2. **Add it.** Click the button, then **Submit**.
+2. **Add it.** Click the button, or go to Settings → Devices & Services → **Add Integration** and search **Memory**. Then **Submit**.
 
    [![Add integration](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=memory)
+
 3. **Turn it on for your assistant.** Settings → Devices & Services → *your AI agent* → **Configure** → tick **Memory** next to **Assist** → Submit.
 
 That's it. Say *"Remember that…"* and it saves. Ask later and it knows.
