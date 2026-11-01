@@ -4,7 +4,8 @@ from __future__ import annotations
 import os
 import re
 import tempfile
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, field
 
 from homeassistant.core import HomeAssistant
 
@@ -22,9 +23,13 @@ class MemoryStore:
     """Synchronous file ops; wrap in async via hass.async_add_executor_job."""
 
     path: str
+    # save()/delete() run on executor threads; parallel tool calls race on the
+    # index read-modify-write without this.
+    _lock: threading.Lock = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         os.makedirs(self.path, exist_ok=True)
+        self._lock = threading.Lock()
 
     @property
     def index_path(self) -> str:
@@ -81,19 +86,25 @@ class MemoryStore:
             f"---\nname: {name}\ndescription: {description}\ntype: {mtype}\n---\n\n"
             f"{content}\n"
         )
-        self._atomic_write(os.path.join(self.path, f"{name}.md"), body)
-        lines = [ln for ln in self._read_index_lines() if not ln.startswith(f"- [{name}](")]
-        lines.append(self._index_line(name, description))
-        lines.sort()
-        self._write_index_lines(lines)
+        with self._lock:
+            self._atomic_write(os.path.join(self.path, f"{name}.md"), body)
+            lines = [
+                ln for ln in self._read_index_lines() if not ln.startswith(f"- [{name}](")
+            ]
+            lines.append(self._index_line(name, description))
+            lines.sort()
+            self._write_index_lines(lines)
 
     def delete(self, name: str) -> None:
         self._validate_name(name)
         target = os.path.join(self.path, f"{name}.md")
-        if os.path.exists(target):
-            os.unlink(target)
-        lines = [ln for ln in self._read_index_lines() if not ln.startswith(f"- [{name}](")]
-        self._write_index_lines(lines)
+        with self._lock:
+            if os.path.exists(target):
+                os.unlink(target)
+            lines = [
+                ln for ln in self._read_index_lines() if not ln.startswith(f"- [{name}](")
+            ]
+            self._write_index_lines(lines)
 
 
 async def async_read_index(hass: HomeAssistant, store: MemoryStore) -> str:

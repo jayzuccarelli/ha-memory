@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 import os
+import re
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
+from custom_components.memory.const import INDEX_FILENAME
 from custom_components.memory.memory_store import MemoryError, MemoryStore
 
 
@@ -104,3 +108,42 @@ def test_atomic_write_no_partial_files_on_error(store, tmp_path, monkeypatch):
 
     leftovers = [p for p in os.listdir(tmp_path) if p.startswith(".tmp_")]
     assert leftovers == []
+
+
+def test_concurrent_save_and_delete_keep_index_in_sync(store, tmp_path):
+    """Parallel tool calls land save() and delete() on executor threads at once.
+
+    The index read-modify-write must be serialized, or one thread's edit is lost
+    and MEMORY.md drifts from the files on disk.
+    """
+    stale = [f"stale_{i:02d}" for i in range(10)]
+    fresh = [f"fresh_{i:02d}" for i in range(20)]
+    for name in stale:
+        store.save(name, "user", f"desc {name}", "old")
+
+    ops = [("delete", n) for n in stale] + [("save", n) for n in fresh]
+    barrier = threading.Barrier(len(ops))
+
+    def run(op, name):
+        barrier.wait()
+        if op == "save":
+            store.save(name, "user", f"desc {name}", "new")
+        else:
+            store.delete(name)
+
+    with ThreadPoolExecutor(max_workers=len(ops)) as pool:
+        for fut in [pool.submit(run, op, n) for op, n in ops]:
+            fut.result()
+
+    indexed = [
+        re.match(r"- \[([a-z0-9_]+)\]\(", ln).group(1)
+        for ln in store.read_index().splitlines()
+        if ln.strip()
+    ]
+    on_disk = {
+        p[: -len(".md")]
+        for p in os.listdir(tmp_path)
+        if p.endswith(".md") and p != INDEX_FILENAME and not p.startswith(".tmp_")
+    }
+    assert len(indexed) == len(set(indexed))
+    assert set(indexed) == on_disk == set(fresh)
