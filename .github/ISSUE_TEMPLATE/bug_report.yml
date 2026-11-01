@@ -24,7 +24,7 @@ body:
     attributes:
       label: Memory version
       description: HACS → Memory, or the version in custom_components/memory/manifest.json.
-      placeholder: "0.2.2"
+      placeholder: "0.2.3"
     validations:
       required: true
   - type: input
