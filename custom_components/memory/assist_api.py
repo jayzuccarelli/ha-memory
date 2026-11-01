@@ -33,7 +33,8 @@ _API_PROMPT_TEMPLATE = (
     "to remember something, call memory_save with a snake_case name and a type "
     "(user, feedback, project, reference, or vocabulary). When a fact changes, "
     "save it under the same name as the existing memory so it replaces the old "
-    "one, and delete any memory it supersedes. When the user asks to "
+    "one, and delete only other memories the new fact makes obsolete. When the "
+    "user asks to "
     "forget something, call memory_delete.\n\n"
     "Current memory index:\n{index}"
 )
