@@ -8,6 +8,8 @@ the agent's config flow under "Control Home Assistant" → API.
 """
 from __future__ import annotations
 
+import logging
+
 import voluptuous as vol
 
 from homeassistant.core import HomeAssistant
@@ -15,7 +17,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import llm
 from homeassistant.util.json import JsonObjectType
 
-from .const import DOMAIN, VALID_TYPES
+from .const import DOMAIN, MAX_INDEX_CHARS, VALID_TYPES
 from .memory_store import (
     MemoryError as _MemoryError,
     MemoryStore,
@@ -25,16 +27,43 @@ from .memory_store import (
     async_save,
 )
 
+_LOGGER = logging.getLogger(__name__)
+
+_DEFAULT_TYPE = "user"
+
 
 _API_PROMPT_TEMPLATE = (
     "You have access to a persistent memory of stable facts that survives across "
     "conversations. The full memory index is below. When the index entry isn't "
     "enough to answer, call memory_read with the matching name. When the user asks "
     "to remember something, call memory_save with a snake_case name and a type "
-    "(user, feedback, project, reference, or vocabulary). When the user asks to "
-    "forget something, call memory_delete.\n\n"
+    "(user, feedback, project, reference, or vocabulary). When a fact changes, "
+    "save it under the same name as the existing memory so it replaces the old "
+    "one, and delete only other memories the new fact makes obsolete. When the "
+    "user asks to forget something, call memory_delete.\n\n"
     "Current memory index:\n{index}"
 )
+
+
+def _capped_index(index: str) -> str:
+    """Index trimmed to MAX_INDEX_CHARS, with a note saying how much was left out."""
+    lines = [ln for ln in index.splitlines() if ln.strip()]
+    kept: list[str] = []
+    size = 0
+    for ln in lines:
+        if size + len(ln) + 1 > MAX_INDEX_CHARS:
+            break
+        kept.append(ln)
+        size += len(ln) + 1
+    omitted = len(lines) - len(kept)
+    if omitted:
+        _LOGGER.warning(
+            "Memory index is over %d characters; %d of %d memories are not in "
+            "the prompt. Delete or merge memories to bring it back under the limit",
+            MAX_INDEX_CHARS, omitted, len(lines),
+        )
+        kept.append(f"({omitted} more memories not listed)")
+    return "\n".join(kept)
 
 
 class _SaveTool(llm.Tool):
@@ -47,7 +76,7 @@ class _SaveTool(llm.Tool):
     parameters = vol.Schema(
         {
             vol.Required("name"): str,
-            vol.Required("type"): vol.In(list(VALID_TYPES)),
+            vol.Optional("type", default=_DEFAULT_TYPE): str,
             vol.Required("description"): str,
             vol.Required("content"): str,
         }
@@ -63,9 +92,12 @@ class _SaveTool(llm.Tool):
         llm_context: llm.LLMContext,
     ) -> JsonObjectType:
         args = tool_input.tool_args
+        mtype = args.get("type")
+        if mtype not in VALID_TYPES:
+            mtype = _DEFAULT_TYPE
         try:
             await async_save(
-                hass, self._store, args["name"], args["type"],
+                hass, self._store, args["name"], mtype,
                 args["description"], args["content"],
             )
         except _MemoryError as err:
@@ -138,11 +170,11 @@ class MemoryAPI(llm.API):
     async def async_get_api_instance(
         self, llm_context: llm.LLMContext
     ) -> llm.APIInstance:
-        index = await async_read_index(self.hass, self._store)
+        index = _capped_index(await async_read_index(self.hass, self._store))
         return llm.APIInstance(
             api=self,
             api_prompt=_API_PROMPT_TEMPLATE.format(
-                index=index.strip() or "(no memories yet)"
+                index=index or "(no memories yet)"
             ),
             llm_context=llm_context,
             tools=self._tools,

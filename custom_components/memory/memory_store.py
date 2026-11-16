@@ -4,13 +4,15 @@ from __future__ import annotations
 import os
 import re
 import tempfile
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, field
 
 from homeassistant.core import HomeAssistant
 
 from .const import INDEX_FILENAME, VALID_TYPES
 
 _NAME_RE = re.compile(r"^[a-z0-9_]+$")
+_DESCRIPTION_PREFIX = "description:"
 
 
 class MemoryError(Exception):
@@ -22,9 +24,13 @@ class MemoryStore:
     """Synchronous file ops; wrap in async via hass.async_add_executor_job."""
 
     path: str
+    # save()/delete() run on executor threads; this keeps MEMORY.md on disk
+    # consistent when parallel tool calls land at once.
+    _lock: threading.Lock = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         os.makedirs(self.path, exist_ok=True)
+        self._lock = threading.Lock()
 
     @property
     def index_path(self) -> str:
@@ -45,25 +51,45 @@ class MemoryStore:
                 os.unlink(tmp)
             raise
 
-    def _read_index_lines(self) -> list[str]:
-        if not os.path.exists(self.index_path):
-            return []
-        with open(self.index_path) as f:
-            return [ln.rstrip("\n") for ln in f if ln.strip()]
-
-    def _write_index_lines(self, lines: list[str]) -> None:
-        body = "\n".join(lines) + ("\n" if lines else "")
-        self._atomic_write(self.index_path, body)
-
     @staticmethod
     def _index_line(name: str, description: str) -> str:
         return f"- [{name}]({name}.md): {description}"
 
-    def read_index(self) -> str:
-        if not os.path.exists(self.index_path):
+    @staticmethod
+    def _file_description(path: str) -> str:
+        """Description from a memory file's frontmatter, or its first body line."""
+        try:
+            with open(path) as f:
+                lines = f.read().splitlines()
+        except OSError:
             return ""
-        with open(self.index_path) as f:
-            return f.read()
+        body_start = 0
+        if lines and lines[0].strip() == "---":
+            for i, ln in enumerate(lines[1:], start=1):
+                if ln.strip() == "---":
+                    body_start = i + 1
+                    break
+                if ln.startswith(_DESCRIPTION_PREFIX):
+                    return ln[len(_DESCRIPTION_PREFIX):].strip()
+        for ln in lines[body_start:]:
+            if ln.strip():
+                return ln.strip()[:120]
+        return ""
+
+    def _build_index(self) -> str:
+        """Index derived from the memory files on disk, one sorted line each."""
+        lines = []
+        for filename in os.listdir(self.path):
+            name, ext = os.path.splitext(filename)
+            if ext != ".md" or filename == INDEX_FILENAME or not _NAME_RE.match(name):
+                continue
+            description = self._file_description(os.path.join(self.path, filename))
+            lines.append(self._index_line(name, description))
+        lines.sort()
+        return "\n".join(lines) + ("\n" if lines else "")
+
+    def read_index(self) -> str:
+        return self._build_index()
 
     def read(self, name: str) -> str:
         self._validate_name(name)
@@ -77,23 +103,22 @@ class MemoryStore:
         self._validate_name(name)
         if mtype not in VALID_TYPES:
             raise MemoryError(f"invalid type {mtype!r}; valid: {VALID_TYPES}")
+        description = " ".join(description.split())
         body = (
             f"---\nname: {name}\ndescription: {description}\ntype: {mtype}\n---\n\n"
             f"{content}\n"
         )
-        self._atomic_write(os.path.join(self.path, f"{name}.md"), body)
-        lines = [ln for ln in self._read_index_lines() if not ln.startswith(f"- [{name}](")]
-        lines.append(self._index_line(name, description))
-        lines.sort()
-        self._write_index_lines(lines)
+        with self._lock:
+            self._atomic_write(os.path.join(self.path, f"{name}.md"), body)
+            self._atomic_write(self.index_path, self._build_index())
 
     def delete(self, name: str) -> None:
         self._validate_name(name)
         target = os.path.join(self.path, f"{name}.md")
-        if os.path.exists(target):
-            os.unlink(target)
-        lines = [ln for ln in self._read_index_lines() if not ln.startswith(f"- [{name}](")]
-        self._write_index_lines(lines)
+        with self._lock:
+            if os.path.exists(target):
+                os.unlink(target)
+            self._atomic_write(self.index_path, self._build_index())
 
 
 async def async_read_index(hass: HomeAssistant, store: MemoryStore) -> str:
