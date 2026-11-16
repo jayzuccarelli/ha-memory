@@ -70,6 +70,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 call.data["type"],
                 call.data["description"],
                 call.data["content"],
+                call.context,
             )
         except _MemoryError as err:
             raise HomeAssistantError(str(err)) from err
@@ -91,7 +92,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_delete(call: ServiceCall) -> None:
         try:
-            await async_delete(hass, store, call.data["name"])
+            await async_delete(hass, store, call.data["name"], call.context)
         except _MemoryError as err:
             raise HomeAssistantError(str(err)) from err
         sensor_eid = f"sensor.{DOMAIN}_index"

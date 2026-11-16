@@ -99,6 +99,7 @@ class _SaveTool(llm.Tool):
             await async_save(
                 hass, self._store, args["name"], mtype,
                 args["description"], args["content"],
+                llm_context.context, llm_context.device_id,
             )
         except _MemoryError as err:
             raise HomeAssistantError(str(err)) from err
@@ -149,7 +150,10 @@ class _DeleteTool(llm.Tool):
     ) -> JsonObjectType:
         name = tool_input.tool_args["name"]
         try:
-            await async_delete(hass, self._store, name)
+            await async_delete(
+                hass, self._store, name,
+                llm_context.context, llm_context.device_id,
+            )
         except _MemoryError as err:
             raise HomeAssistantError(str(err)) from err
         return {"deleted": name}

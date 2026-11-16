@@ -75,6 +75,8 @@ The user has a dog named Spot. Spot is a household member.
 
 An auto-maintained `MEMORY.md` index lists one line per memory. The index is always in the prompt; the agent reads a full file only when it needs the details.
 
+Memories are shared by the whole household, not kept per user: a voice satellite reports which device heard the request, not who spoke. Each save and delete fires a `memory_saved` or `memory_deleted` event and appears in the logbook with the memory's name and the user or device it came from.
+
 Tested with Anthropic Claude, OpenAI Conversation, Google Generative AI / Gemini, and AI Tasks. Inspired by Claude Code's `MEMORY.md` pattern.
 
 </details>

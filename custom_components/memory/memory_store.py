@@ -7,9 +7,15 @@ import tempfile
 import threading
 from dataclasses import dataclass, field
 
-from homeassistant.core import HomeAssistant
+from homeassistant.core import Context, HomeAssistant
+from homeassistant.util import dt as dt_util
 
-from .const import INDEX_FILENAME, VALID_TYPES
+from .const import (
+    EVENT_MEMORY_DELETED,
+    EVENT_MEMORY_SAVED,
+    INDEX_FILENAME,
+    VALID_TYPES,
+)
 
 _NAME_RE = re.compile(r"^[a-z0-9_]+$")
 _DESCRIPTION_PREFIX = "description:"
@@ -99,13 +105,28 @@ class MemoryStore:
         with open(target) as f:
             return f.read()
 
-    def save(self, name: str, mtype: str, description: str, content: str) -> None:
+    def save(
+        self,
+        name: str,
+        mtype: str,
+        description: str,
+        content: str,
+        user_id: str | None = None,
+        device_id: str | None = None,
+    ) -> None:
         self._validate_name(name)
         if mtype not in VALID_TYPES:
             raise MemoryError(f"invalid type {mtype!r}; valid: {VALID_TYPES}")
         description = " ".join(description.split())
+        provenance = ""
+        if user_id is not None:
+            provenance += f"saved_by_user: {user_id}\n"
+        if device_id is not None:
+            provenance += f"saved_by_device: {device_id}\n"
+        provenance += f"saved_at: {dt_util.utcnow().isoformat(timespec='seconds')}\n"
         body = (
-            f"---\nname: {name}\ndescription: {description}\ntype: {mtype}\n---\n\n"
+            f"---\nname: {name}\ndescription: {description}\ntype: {mtype}\n"
+            f"{provenance}---\n\n"
             f"{content}\n"
         )
         with self._lock:
@@ -136,9 +157,42 @@ async def async_save(
     mtype: str,
     description: str,
     content: str,
+    context: Context | None = None,
+    device_id: str | None = None,
 ) -> None:
-    await hass.async_add_executor_job(store.save, name, mtype, description, content)
+    user_id = context.user_id if context is not None else None
+    await hass.async_add_executor_job(
+        store.save, name, mtype, description, content, user_id, device_id
+    )
+    _fire(hass, EVENT_MEMORY_SAVED, name, context, device_id)
 
 
-async def async_delete(hass: HomeAssistant, store: MemoryStore, name: str) -> None:
+async def async_delete(
+    hass: HomeAssistant,
+    store: MemoryStore,
+    name: str,
+    context: Context | None = None,
+    device_id: str | None = None,
+) -> None:
     await hass.async_add_executor_job(store.delete, name)
+    _fire(hass, EVENT_MEMORY_DELETED, name, context, device_id)
+
+
+def _fire(
+    hass: HomeAssistant,
+    event_type: str,
+    name: str,
+    context: Context | None,
+    device_id: str | None,
+) -> None:
+    # Name and ids only: the recorder keeps events for days, and a deleted
+    # memory's text must not linger there.
+    hass.bus.async_fire(
+        event_type,
+        {
+            "name": name,
+            "user_id": context.user_id if context is not None else None,
+            "device_id": device_id,
+        },
+        context=context,
+    )

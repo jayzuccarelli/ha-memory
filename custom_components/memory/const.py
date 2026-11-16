@@ -15,3 +15,6 @@ MAX_INDEX_CHARS = 8000
 SERVICE_SAVE = "save"
 SERVICE_READ = "read"
 SERVICE_DELETE = "delete"
+
+EVENT_MEMORY_SAVED = "memory_saved"
+EVENT_MEMORY_DELETED = "memory_deleted"
