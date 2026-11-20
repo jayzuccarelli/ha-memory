@@ -9,6 +9,8 @@ CONF_PATH = "path"
 VALID_TYPES = ("user", "feedback", "project", "reference", "vocabulary")
 
 INDEX_FILENAME = "MEMORY.md"
+# The index goes into the prompt on every request; cap what is sent.
+MAX_INDEX_CHARS = 8000
 
 SERVICE_SAVE = "save"
 SERVICE_READ = "read"

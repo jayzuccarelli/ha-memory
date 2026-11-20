@@ -6,6 +6,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from homeassistant.helpers import llm
 
+from custom_components.memory import assist_api
 from custom_components.memory.const import CONF_PATH, DOMAIN
 
 
@@ -104,3 +105,52 @@ async def test_delete_tool_removes_memory(hass, setup_integration):
         _ctx(hass),
     )
     assert result == {"deleted": "k"}
+
+
+@pytest.mark.parametrize("tool_args", [{}, {"type": "not_a_real_type"}])
+async def test_save_tool_tolerates_missing_or_unknown_type(
+    hass, setup_integration, tool_args
+):
+    api = await llm.async_get_api(hass, DOMAIN, _ctx(hass))
+    save_tool = next(t for t in api.tools if t.name == "memory_save")
+    result = await save_tool.async_call(
+        hass,
+        llm.ToolInput(
+            tool_name="memory_save",
+            tool_args={"name": "k", "description": "d", "content": "b", **tool_args},
+        ),
+        _ctx(hass),
+    )
+    assert result == {"saved": "k"}
+    response = await hass.services.async_call(
+        DOMAIN, "read", {"name": "k"}, blocking=True, return_response=True,
+    )
+    assert "type: user" in response["content"]
+
+
+async def test_api_prompt_caps_index(hass, setup_integration, monkeypatch, caplog):
+    for name in ("a", "b", "c"):
+        await hass.services.async_call(
+            DOMAIN, "save",
+            {"name": name, "type": "user", "description": "x" * 40, "content": "b"},
+            blocking=True,
+        )
+    monkeypatch.setattr(assist_api, "MAX_INDEX_CHARS", 120)
+
+    api = await llm.async_get_api(hass, DOMAIN, _ctx(hass))
+
+    assert "- [a](a.md)" in api.api_prompt
+    assert "- [b](b.md)" in api.api_prompt
+    assert "- [c](c.md)" not in api.api_prompt
+    assert "(1 more memories not listed)" in api.api_prompt
+    assert "1 of 3 memories are not in the prompt" in caplog.text
+
+
+async def test_index_attribute_is_not_recorded(hass, setup_integration):
+    """The recorder must not keep the index, or deleted memories linger in history."""
+    from custom_components.memory.sensor import MemoryIndexSensor
+
+    assert "content" in MemoryIndexSensor._unrecorded_attributes
+    state = hass.states.get(f"sensor.{DOMAIN}_index")
+    assert state is not None
+    assert "content" in state.attributes

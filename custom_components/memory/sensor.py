@@ -29,6 +29,8 @@ class MemoryIndexSensor(SensorEntity):
     _attr_has_entity_name = False
     _attr_should_poll = True
     _attr_icon = "mdi:notebook-outline"
+    # Keep the index out of the recorder: it would retain deleted memories.
+    _unrecorded_attributes = frozenset({"content"})
 
     def __init__(self, entry: ConfigEntry, store: MemoryStore) -> None:
         self._store = store

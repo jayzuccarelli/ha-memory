@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 import os
+import re
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
+from custom_components.memory.const import INDEX_FILENAME
 from custom_components.memory.memory_store import MemoryError, MemoryStore
 
 
@@ -104,3 +108,73 @@ def test_atomic_write_no_partial_files_on_error(store, tmp_path, monkeypatch):
 
     leftovers = [p for p in os.listdir(tmp_path) if p.startswith(".tmp_")]
     assert leftovers == []
+
+
+def test_index_follows_files_edited_by_hand(store, tmp_path):
+    """The index is derived from the files, so manual edits show up on the next read."""
+    store.save("a", "user", "first", "x")
+    store.save("b", "user", "second", "y")
+
+    (tmp_path / "b.md").unlink()
+    (tmp_path / "a.md").write_text(
+        "---\nname: a\ndescription: edited by hand\ntype: user\n---\n\nbody\n"
+    )
+    (tmp_path / "c.md").write_text("No frontmatter, just a note.\n")
+
+    lines = store.read_index().splitlines()
+    assert lines == [
+        "- [a](a.md): edited by hand",
+        "- [c](c.md): No frontmatter, just a note.",
+    ]
+
+
+def test_index_ignores_files_that_are_not_memories(store, tmp_path):
+    store.save("a", "user", "d", "x")
+    (tmp_path / "Not-A-Memory.md").write_text("x")
+    (tmp_path / "notes.txt").write_text("x")
+    assert store.read_index().splitlines() == ["- [a](a.md): d"]
+
+
+def test_newline_in_description_stays_on_one_index_line(store, tmp_path):
+    store.save("a", "user", "line one\nline two\r\n  line three", "x")
+    assert store.read_index().splitlines() == ["- [a](a.md): line one line two line three"]
+    assert "description: line one line two line three\n" in (tmp_path / "a.md").read_text()
+
+
+def test_index_file_on_disk_matches_read_index(store, tmp_path):
+    store.save("a", "user", "d", "x")
+    store.save("b", "user", "e", "y")
+    store.delete("a")
+    assert (tmp_path / INDEX_FILENAME).read_text() == store.read_index()
+
+
+def test_concurrent_save_and_delete_keep_index_in_sync(store, tmp_path):
+    """Parallel tool calls land save() and delete() on executor threads at once."""
+    stale = [f"stale_{i:02d}" for i in range(10)]
+    fresh = [f"fresh_{i:02d}" for i in range(20)]
+    for name in stale:
+        store.save(name, "user", f"desc {name}", "old")
+
+    ops = [("delete", n) for n in stale] + [("save", n) for n in fresh]
+    barrier = threading.Barrier(len(ops))
+
+    def run(op, name):
+        barrier.wait()
+        if op == "save":
+            store.save(name, "user", f"desc {name}", "new")
+        else:
+            store.delete(name)
+
+    with ThreadPoolExecutor(max_workers=len(ops)) as pool:
+        for fut in [pool.submit(run, op, n) for op, n in ops]:
+            fut.result()
+
+    def names(text):
+        return [
+            re.match(r"- \[([a-z0-9_]+)\]\(", ln).group(1)
+            for ln in text.splitlines()
+            if ln.strip()
+        ]
+
+    assert names(store.read_index()) == sorted(fresh)
+    assert names((tmp_path / INDEX_FILENAME).read_text()) == sorted(fresh)
